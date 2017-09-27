@@ -473,6 +473,27 @@ class KMBInfo(MakeBaseInfo):
             item.make_item_class_categories(self.category_cache)
             item.make_item_keyword_categories(self.category_cache)
 
+            if self.category_exists(self.name):
+                exact_match = False
+                # cat with name = self.name exists,
+                # but we don't know if it's correct
+                exact_category = pywikibot.Page(
+                    self.commons, "Category: {}".format(self.name))
+                parent_cats = exact_category.categories()
+                for cat in parent_cats:
+                    cat_name = cat.title(withNamespace=False)
+                    if cat_name in self.content_cats:
+                        exact_match = True
+                        # if its parent(s) is in this item's cat,
+                        # we can assume it's correct
+                        self.content_cats.discard(cat_name)
+
+                if exact_match is True:
+                    exact_cat_name = exact_category.title(withNamespace=False)
+                    self.content_cats.add(exact_cat_name)
+                else:
+                    self.meta_cats.add('needing more specific categorisation')
+
         # Add parish/municipality categorisation when needed
         if item.needs_place_cat:
             item.make_place_category()
