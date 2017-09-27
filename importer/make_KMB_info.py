@@ -465,10 +465,6 @@ class KMBInfo(MakeBaseInfo):
         :param item: the KMBItem to analyse
         :return: list of categories (without "Category:" prefix)
         """
-        # Add parish/municipality categorisation when needed
-        if item.needs_place_cat:
-            item.make_place_category()
-
         # depicted
         found_commonscat = item.make_commonscat_categories(self.category_cache)
 
@@ -476,6 +472,12 @@ class KMBInfo(MakeBaseInfo):
         if not found_commonscat:
             item.make_item_class_categories(self.category_cache)
             item.make_item_keyword_categories(self.category_cache)
+
+        # Add parish/municipality categorisation when needed
+        if item.needs_place_cat:
+            item.make_place_category()
+
+        if not found_commonscat:
             item.get_exact_cat_from_name(self.category_cache)
 
         return list(item.content_cats)
