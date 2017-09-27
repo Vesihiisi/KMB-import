@@ -580,6 +580,7 @@ class KMBItem(object):
         self.kmb_info = kmb_info  # the KBMInfo instance creating this KMBItem
         self.needs_place_cat = True  # if item needs categorisation by place
         self.log = kmb_info.log
+        self.commons = pywikibot.Site('commons', 'commons')
 
     def get_exact_cat_from_name(self, cache):
         """
@@ -590,9 +591,10 @@ class KMBItem(object):
         category is in the item's categories. The parent
         categories are then removed.
         """
-        exact_category_from_name = self.kmb_info.category_exists(self.name, cache)
+        exact_match = False
+        exact_category_from_name = self.kmb_info.category_exists(self.namn, cache)
         if exact_category_from_name:
-            exact_match = False
+            exact_category_from_name = pywikibot.Page(self.commons, self.namn)
             parent_cats = exact_category_from_name.categories()
             for cat in parent_cats:
                 cat_name = cat.title(withNamespace=False)
