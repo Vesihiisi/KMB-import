@@ -473,6 +473,10 @@ class KMBInfo(MakeBaseInfo):
             item.make_item_class_categories(self.category_cache)
             item.make_item_keyword_categories(self.category_cache)
 
+            # Add parish/municipality categorisation when needed
+            if item.needs_place_cat:
+                item.make_place_category()
+
             if self.category_exists(self.name):
                 exact_match = False
                 # cat with name = self.name exists,
@@ -493,10 +497,6 @@ class KMBInfo(MakeBaseInfo):
                     self.content_cats.add(exact_cat_name)
                 else:
                     self.meta_cats.add('needing more specific categorisation')
-
-        # Add parish/municipality categorisation when needed
-        if item.needs_place_cat:
-            item.make_place_category()
 
         return list(item.content_cats)
 
