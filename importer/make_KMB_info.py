@@ -465,6 +465,10 @@ class KMBInfo(MakeBaseInfo):
         :param item: the KMBItem to analyse
         :return: list of categories (without "Category:" prefix)
         """
+        # Add parish/municipality categorisation when needed
+        if item.needs_place_cat:
+            item.make_place_category()
+
         # depicted
         found_commonscat = item.make_commonscat_categories(self.category_cache)
 
@@ -473,32 +477,37 @@ class KMBInfo(MakeBaseInfo):
             item.make_item_class_categories(self.category_cache)
             item.make_item_keyword_categories(self.category_cache)
 
-            # Add parish/municipality categorisation when needed
-            if item.needs_place_cat:
-                item.make_place_category()
 
-            if self.category_exists(self.name):
-                exact_match = False
-                # cat with name = self.name exists,
-                # but we don't know if it's correct
-                exact_category = pywikibot.Page(
-                    self.commons, "Category: {}".format(self.name))
-                parent_cats = exact_category.categories()
-                for cat in parent_cats:
-                    cat_name = cat.title(withNamespace=False)
-                    if cat_name in self.content_cats:
-                        exact_match = True
-                        # if its parent(s) is in this item's cat,
-                        # we can assume it's correct
-                        self.content_cats.discard(cat_name)
 
-                if exact_match is True:
-                    exact_cat_name = exact_category.title(withNamespace=False)
-                    self.content_cats.add(exact_cat_name)
-                else:
-                    self.meta_cats.add('needing more specific categorisation')
 
         return list(item.content_cats)
+
+    def get_exact_cat_from_name(self, cache):
+        """
+        Try to find a category with the same name as item.
+
+        Only adds the exact category to the item's categories
+        if at least one of the parents of the exact
+        category is in the item's categories. The parent
+        categories are then removed.
+        """
+        exact_category_from_name = self.kmb_info.category_exists(self.name, cache)
+        if exact_category_from_name:
+            exact_match = False
+            parent_cats = exact_category_from_name.categories()
+            for cat in parent_cats:
+                cat_name = cat.title(withNamespace=False)
+                if cat_name in self.content_cats:
+                    exact_match = True
+                    # if its parent(s) is in this item's cat,
+                    # we can assume it's correct
+                    self.content_cats.discard(cat_name)
+
+        if exact_match is True:
+            exact_category_title = exact_category_from_name.title(withNamespace=False)
+            self.content_cats.add(exact_category_title)
+        else:
+            self.meta_cats.add('needing categorisation (no exact match)')
 
     def generate_meta_cats(self, item, content_cats):
         """
