@@ -590,19 +590,28 @@ class KMBItem(object):
         if at least one of the parents of the exact
         category is in the item's categories. The parent
         categories are then removed.
+
+        Simplified handling if item is a church.
         """
         exact_match = False
         exact_category_from_name = self.kmb_info.category_exists(self.namn, cache)
         if exact_category_from_name:
             exact_category_from_name = pywikibot.Page(self.commons, self.namn)
-            parent_cats = exact_category_from_name.categories()
-            for cat in parent_cats:
-                cat_name = cat.title(withNamespace=False)
-                if cat_name in self.content_cats:
+            if "kyrka" in self.namn.lower():
+                # church - don't check parent cats.
+                # only check if disambig (e.g. Category:Ljungby kyrka)
+                if not exact_category_from_name.isDisambig():
                     exact_match = True
-                    # if its parent(s) is in this item's cat,
-                    # we can assume it's correct
-                    self.content_cats.discard(cat_name)
+            else:
+                # not a church - check parent cats
+                parent_cats = exact_category_from_name.categories()
+                for cat in parent_cats:
+                    cat_name = cat.title(withNamespace=False)
+                    if cat_name in self.content_cats:
+                        exact_match = True
+                        # if its parent(s) is in this item's cat,
+                        # we can assume it's correct
+                        self.content_cats.discard(cat_name)
 
         if exact_match is True:
             exact_category_title = exact_category_from_name.title(withNamespace=False)
