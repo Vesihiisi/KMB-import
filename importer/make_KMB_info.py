@@ -614,7 +614,6 @@ class KMBItem(object):
 
         if ("Religionsutövning - kyrkor" in self.item_classes):
             exact_match = self.get_exact_match_church()
-            print(exact_match)
 
         # Not a church, more generalised guesswork
         if exact_match is False:
