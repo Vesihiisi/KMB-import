@@ -87,6 +87,7 @@ class KMBInfo(MakeBaseInfo):
         photographer_file = os.path.join(MAPPINGS_DIR, 'photographers.json')
         kmb_files_file = os.path.join(MAPPINGS_DIR, 'kmb_files.json')
         commonscat_file = os.path.join(MAPPINGS_DIR, 'commonscat.json')
+        church_file = os.path.join(MAPPINGS_DIR, 'churches.json')
         photographer_page = 'Institution:Riksantikvarieämbetet/KMB/creators'
 
         if update_mappings:
@@ -132,6 +133,8 @@ class KMBInfo(MakeBaseInfo):
                 kmb_files_file, as_json=True)
             self.mappings['commonscat'] = common.open_and_read_file(
                 commonscat_file, as_json=True)
+            self.mappings['churches'] = common.open_and_read_file(
+                church_file, as_json=True)
 
         self.mappings['countries'] = common.open_and_read_file(
             countries_file, as_json=True)
@@ -595,8 +598,24 @@ class KMBItem(object):
         """
         exact_match = False
         exact_category_from_name = self.kmb_info.category_exists(self.namn, cache)
-        if exact_category_from_name:
-            exact_category_from_name = pywikibot.Page(self.commons, self.namn)
+
+        if exact_category_from_name is False:
+            return
+
+        # See if we can get an exact cat from church file
+        municipal_cats = [x for x in list(self.content_cats) if "municipality" in x.lower()]
+        if len(municipal_cats) == 1:
+            municipal_cat = municipal_cats[0]
+            churches_municip = self.kmb_info.mappings["churches"][municipal_cat]
+            if self.namn in churches_municip:
+                exact_match = True
+                exact_category_title = churches_municip[self.namn][9:]
+                self.content_cats.add(exact_category_title)
+
+        # Not a church, more generalised guesswork
+        if exact_match is False:
+            exact_category_from_name = pywikibot.Page(
+                self.commons, "Category:" + self.namn)
             parent_cats = exact_category_from_name.categories()
             for cat in parent_cats:
                 cat_name = cat.title(withNamespace=False)
@@ -605,11 +624,12 @@ class KMBItem(object):
                     # if its parent(s) is in this item's cat,
                     # we can assume it's correct
                     self.content_cats.discard(cat_name)
+            if exact_match is True:
+                exact_category_title = exact_category_from_name.title(
+                    withNamespace=False)
+                self.content_cats.add(exact_category_title)
 
-        if exact_match is True:
-            exact_category_title = exact_category_from_name.title(withNamespace=False)
-            self.content_cats.add(exact_category_title)
-        else:
+        if exact_match is False:
             self.meta_cats.add('needing categorisation (no exact match)')
 
     def get_other_versions(self):
