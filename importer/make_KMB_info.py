@@ -593,7 +593,7 @@ class KMBItem(object):
             muni_cat_name = self.kmb_info.mappings['kommun'][self.kommun]['commonscat']
             churches_municip = self.kmb_info.mappings["churches"].get(muni_cat_name)
             if churches_municip and self.namn in churches_municip:
-                exact_category_title = churches_municip[self.namn][9:]
+                exact_category_title = churches_municip[self.namn]
                 self.content_cats.add(exact_category_title)
                 return True
 
@@ -607,18 +607,17 @@ class KMBItem(object):
         categories are then removed.
         """
         exact_match = False
-        exact_category_from_name = self.kmb_info.category_exists(self.namn, cache)
 
-        if exact_category_from_name is False:
-            return
-
+        # churches are done separately
         if ("Religionsutövning - kyrkor" in self.item_classes):
-            exact_match = self.get_exact_match_church()
+            if self.get_exact_match_church():
+                return
 
         # Not a church, more generalised guesswork
-        if exact_match is False:
-            exact_category_from_name = pywikibot.Page(
-                self.commons, "Category:" + self.namn)
+        exact_category_from_name = self.kmb_info.category_exists(self.namn,
+                                                                 cache)
+        if exact_category_from_name:
+            exact_category_from_name = pywikibot.Page(self.commons, self.namn)
             parent_cats = exact_category_from_name.categories()
             for cat in parent_cats:
                 cat_name = cat.title(withNamespace=False)
@@ -627,12 +626,12 @@ class KMBItem(object):
                     # if its parent(s) is in this item's cat,
                     # we can assume it's correct
                     self.content_cats.discard(cat_name)
-            if exact_match is True:
+            if exact_match:
                 exact_category_title = exact_category_from_name.title(
                     withNamespace=False)
                 self.content_cats.add(exact_category_title)
 
-        if exact_match is False:
+        if not exact_match:
             self.meta_cats.add('needing categorisation (no exact match)')
 
     def get_other_versions(self):
