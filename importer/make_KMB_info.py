@@ -133,11 +133,11 @@ class KMBInfo(MakeBaseInfo):
                 kmb_files_file, as_json=True)
             self.mappings['commonscat'] = common.open_and_read_file(
                 commonscat_file, as_json=True)
-            self.mappings['churches'] = common.open_and_read_file(
-                church_file, as_json=True)
 
         self.mappings['countries'] = common.open_and_read_file(
             countries_file, as_json=True)
+        self.mappings['churches'] = common.open_and_read_file(
+            church_file, as_json=True)
         self.mappings['tags'] = common.open_and_read_file(
             tags_file, as_json=True)
         self.mappings['primary_classes'] = common.open_and_read_file(
@@ -587,6 +587,16 @@ class KMBItem(object):
         self.log = kmb_info.log
         self.commons = pywikibot.Site('commons', 'commons')
 
+    def get_exact_match_church(self):
+        """Try to find correct category for church in Sweden."""
+        if self.kommun:
+            muni_cat_name = self.kmb_info.mappings['kommun'][self.kommun]['commonscat']
+            churches_municip = self.kmb_info.mappings["churches"].get(muni_cat_name)
+            if churches_municip and self.namn in churches_municip:
+                exact_category_title = churches_municip[self.namn][9:]
+                self.content_cats.add(exact_category_title)
+                return True
+
     def get_exact_cat_from_name(self, cache):
         """
         Try to find a category with the same name as item.
@@ -602,15 +612,9 @@ class KMBItem(object):
         if exact_category_from_name is False:
             return
 
-        # See if we can get an exact cat from church file
-        municipal_cats = [x for x in list(self.content_cats) if "municipality" in x.lower()]
-        if len(municipal_cats) == 1:
-            municipal_cat = municipal_cats[0]
-            churches_municip = self.kmb_info.mappings["churches"][municipal_cat]
-            if self.namn in churches_municip:
-                exact_match = True
-                exact_category_title = churches_municip[self.namn][9:]
-                self.content_cats.add(exact_category_title)
+        if ("Religionsutövning - kyrkor" in self.item_classes):
+            exact_match = self.get_exact_match_church()
+            print(exact_match)
 
         # Not a church, more generalised guesswork
         if exact_match is False:
