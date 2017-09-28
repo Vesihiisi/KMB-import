@@ -638,6 +638,9 @@ class KMBItem(object):
         * self.avbildar is a list of wikitext templates (bbr, fmis, shm) which
             all start with a linebreak.
 
+        If no matches are found then self.namn is returned to ensure field is
+        not entirely empty.
+
         :return: str
         """
         wiki_description = ''
@@ -650,7 +653,7 @@ class KMBItem(object):
         if self.avbildar:
             wiki_description += '\n{}'.format(' '.join(self.avbildar))
 
-        return wiki_description.strip()
+        return wiki_description.strip() or self.namn
 
     def get_original_description(self):
         """Get original description incl. motif, keywords and class(es)."""
