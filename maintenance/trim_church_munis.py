@@ -9,7 +9,7 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 def load_churches():
-    church_commonscat_file = os.join(DIR_PATH, "church_commonscat.json")
+    church_commonscat_file = os.path.join(DIR_PATH, "church_commonscat.json")
     raw_church = common.open_and_read_file(
         church_commonscat_file, as_json=True)
 
